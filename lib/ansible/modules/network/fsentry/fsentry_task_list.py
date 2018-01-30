@@ -29,7 +29,7 @@ options:
             - Description to be added to the TaskList on the forum.
     enabled:
         description:
-            - Should the TaskList be enabled on the forum.
+            - Should the TaskList be enabled on the forum?
         default: yes
         type: bool
 extends_documentation_fragment:

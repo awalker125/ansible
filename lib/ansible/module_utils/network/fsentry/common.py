@@ -104,6 +104,7 @@ HAS_REQUESTS = True
 try:
     from forumsentry.task_lists_api import TaskListsApi
     from forumsentry.task_list_groups_api import TaskListGroupsApi
+    from forumsentry.http_listener_policy_api import HttpListenerPolicyApi
     from forumsentry.config import Config
 
     HAS_FSENTRY_SDK = True
@@ -184,6 +185,7 @@ class FSentryModuleBase(object):
         # apis
         self._task_lists_api = None
         self._task_list_group_api = None
+        self._http_listener_policy_api = None
         
         # There does not seem to be a way to implement a nested required_if and required_one_of
         if self.state == "fsg":
@@ -281,6 +283,16 @@ class FSentryModuleBase(object):
         if not self._task_list_group_api:
             self._task_list_group_api = TaskListGroupsApi(config=self._config)
         return self._task_list_group_api
+
+    @property
+    def http_listener_policy_api(self):
+        '''
+        Http Listener policy api property
+        '''
+        if not self._http_listener_policy_api:
+            self._http_listener_policy_api = HttpListenerPolicyApi(config=self._config)
+        return self._http_listener_policy_api  
+
     
     def log(self, msg, pretty_print=False):
         # pass
