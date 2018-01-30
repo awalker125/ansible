@@ -17,21 +17,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: fsentry_task_list
+module: fsentry_task_list_group
 version_added: "2.4"
-short_description: Manage forum sentry TaskList(s).
+short_description: Manage forum sentry TaskListGroup(s).
 description:
-    - Create, update or delete a TaskList.
-    - Import/export a TaskList.
+    - Create, update or delete a TaskListGroup.
+    - Import/export a TaskListGroup.
 options:
     description:
         description:
-            - Description to be added to the TaskList on the forum.
-    enabled:
+            - Description to be added to the TaskListGroup on the forum.
+    task_lists:
         description:
-            - Should the TaskList be enabled on the forum.
-        default: yes
-        type: bool
+            - A comma separated list of TaskLists to include in the task TaskListGroup
+        type: str
 extends_documentation_fragment:
     - fsentry
 
@@ -44,7 +43,7 @@ author:
 EXAMPLES = '''
 #import
 
-fsentry_task_list:
+fsentry_task_list_group:
   name: hello_world
   fsentry_protocol: http
   fsentry_host: forumsentry-dev
@@ -60,7 +59,7 @@ fsentry_task_list:
   
 #export
 
-fsentry_task_list:
+fsentry_task_list_group:
   name: hello_world
   fsentry_protocol: http
   fsentry_host: forumsentry-dev
@@ -76,7 +75,7 @@ fsentry_task_list:
 
 #create
 
-fsentry_task_list:
+fsentry_task_list_group:
   name: hello_world
   fsentry_protocol: http
   fsentry_host: forumsentry-dev
@@ -87,11 +86,11 @@ fsentry_task_list:
   debug: false
   state: present
   description: "hello_world world"
-  enabled: true
+  task_lists: "task_list1,task_list2"
 
 #remove
 
-fsentry_task_list:
+fsentry_task_list_group:
   name: hello_world
   fsentry_protocol: http
   fsentry_host: forumsentry-dev
@@ -105,7 +104,7 @@ fsentry_task_list:
 
 RETURN = '''
 state:
-  description: current state of the TaskList.
+  description: current state of the TaskListGroup.
   returned: on success
   type: complex
   contains:
@@ -117,19 +116,18 @@ state:
               - deployed
               - exported
               - deleted
-      enabled:
-            description: the enabled state of the TaskList on the forum.
+      task_lists:
+            description: the TaskLists attached to the TaskListGroup on the forum.
             returned: when state is present
-            type: bool
+            type: str
             sample:
-                - true
-                - false
+                - task_list1,task_list2
       description:
-            description: the description of the TaskList on the forum.
+            description: the description of the TaskListGroup on the forum.
             returned: when state is present
             type: str
       name:
-            description: the name of the TaskList on the forum.
+            description: the name of the TaskListGroup on the forum.
             returned: when state present
             type: str
 '''  # NOQA
@@ -137,12 +135,12 @@ state:
 from ansible.module_utils.network.fsentry.common import FSentryModuleBase
 
 try:
-    from forumsentry_api.models.task_list import TaskList
+    from forumsentry_api.models.task_list_group import TaskListGroup
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
-class FSentryTaskList(FSentryModuleBase):
+class FSentryTaskListGroup(FSentryModuleBase):
 
 
     def __init__(self):
@@ -150,7 +148,7 @@ class FSentryTaskList(FSentryModuleBase):
         # Additional args for this module
         self.module_arg_spec = dict(
             description=dict(type='str'),
-            enabled=dict(type='bool', default=True),
+            task_lists=dict(type='str'),
             )
 
         self.module_required_if = [
@@ -167,11 +165,11 @@ class FSentryTaskList(FSentryModuleBase):
         # additional props for this module
         # These will have there values set as part of super().__init__
         self.description = None
-        self.enabled = None
+        self.task_lists = None
 
 
 
-        super(FSentryTaskList, self).__init__(self.module_arg_spec,
+        super(FSentryTaskListGroup, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
                                             required_if=self.module_required_if,
                                             add_file_common_args=False
@@ -181,11 +179,11 @@ class FSentryTaskList(FSentryModuleBase):
 
     def exec_module(self, **kwargs):
 
-        want_state = TaskList(name=self.name, description=self.description, enabled=self.enabled) 
+        want_state = TaskListGroup(name=self.name, description=self.description, task_lists=self.task_lists) 
         have_state = None
         updated_state = None
    
-        api = self.task_lists_api
+        api = self.task_list_groups_api
         results = dict()
         changed = False
 
@@ -197,7 +195,7 @@ class FSentryTaskList(FSentryModuleBase):
         except Exception as e:
             self.fail("Failed to get current state: {0}".format(e.message))
         
-        # We want the TaskList on the forum
+        # We want the TaskListGroup on the forum
         if self.state == 'present':
                         
             if have_state is not None:
@@ -216,7 +214,7 @@ class FSentryTaskList(FSentryModuleBase):
                     # If the want state is not None i.e we did specify it we'll record it as delta that needs to be updated. 
                     found_deltas = dict()
                     
-                    # get the props on this TaskList
+                    # get the props on this TaskListGroup
                     for prop in have_state.swagger_types.keys():
 
                         
@@ -244,7 +242,7 @@ class FSentryTaskList(FSentryModuleBase):
                 changed = True
                 results = want_state.to_dict()    
         
-        # We do not want the TaskList on the forum    
+        # We do not want the TaskListGroup on the forum    
         elif self.state == 'absent':
             
             if have_state is not None:
@@ -268,7 +266,7 @@ class FSentryTaskList(FSentryModuleBase):
                 # 
                 # 1. Check the src file is a file
                 # 2. Check the src file is readable
-                # 3. If have_state is not None the TaskList exists on the forum so:
+                # 3. If have_state is not None the TaskListGroup exists on the forum so:
                 #    i. if force then upload
                 #    ii. if not force then assume no changes are required
                 #     
@@ -277,14 +275,14 @@ class FSentryTaskList(FSentryModuleBase):
                 self.src_is_valid()
                 # we want to import to the device
                 if have_state is not None:
-                    # the TaskList already exists. We will only import if force = true
+                    # the TaskListGroup already exists. We will only import if force = true
                     if self.force:
                         changed = True
                     else:
                         self.module.warn("{0} exists. Use force to overwrite".format(self.name))
                         changed = False
                 else:
-                    # the TaskList doesnt exist so we should run the import. There is no way to validate that the import contains the TaskList we are interested in unfortunately
+                    # the TaskListGroup doesnt exist so we should run the import. There is no way to validate that the import contains the TaskListGroup we are interested in unfortunately
                     changed = True    
             else:
                 # dest arg provided we want to export from the forum. (Note: we are relying on the module validation rules to ensure either src or dest is set with state=fsg)
@@ -299,7 +297,7 @@ class FSentryTaskList(FSentryModuleBase):
 
                 
                 if have_state is None:
-                    self.fail("cannot export none existent TaskList {0}".format(self.name))
+                    self.fail("cannot export none existent TaskListGroup {0}".format(self.name))
                 
                 # make sure our dest is a file not a directory.
                 self.dest_as_file()
@@ -329,7 +327,7 @@ class FSentryTaskList(FSentryModuleBase):
             #We arent in check mode so we'll make changes here if we need to
             
             if self.state == 'present' and changed:
-                #Create/Update the TaskList
+                #Create/Update the TaskListGroup
                 try:
                     updated_state = api.set(self.name, want_state)
                     self.results['state'] = updated_state.to_dict()
@@ -338,7 +336,7 @@ class FSentryTaskList(FSentryModuleBase):
                     self.fail("Failed to update state: {0} ".format(e.message))
                         
             elif self.state == 'absent' and changed:
-                # delete the TaskList
+                # delete the TaskListGroup
                 try:
                     updated_state = api.delete(self.name)
                     self.results['state']['status'] = 'deleted'
@@ -381,7 +379,7 @@ class FSentryTaskList(FSentryModuleBase):
                     except (OSError, IOError) as e:
                         self.fail('The destination directory ({0}) is not writable by the current user. Error was: {1}'.format(os.path.dirname(self.dest), e.message))
                     except Exception as e:
-                        self.fail("Failed to export TaskList: {0}".format(e.message))
+                        self.fail("Failed to export TaskListGroup: {0}".format(e.message))
                     finally:
                         # cleanup any temp files
                         if fsg_tmp is not None:
@@ -399,7 +397,7 @@ class FSentryTaskList(FSentryModuleBase):
 
 
 def main():
-    FSentryTaskList()
+    FSentryTaskListGroup()
 
 if __name__ == '__main__':
     main()

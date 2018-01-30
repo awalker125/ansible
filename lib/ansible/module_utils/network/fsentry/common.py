@@ -103,6 +103,7 @@ HAS_REQUESTS = True
 
 try:
     from forumsentry.task_lists_api import TaskListsApi
+    from forumsentry.task_list_groups_api import TaskListGroupsApi
     from forumsentry.config import Config
 
     HAS_FSENTRY_SDK = True
@@ -182,6 +183,7 @@ class FSentryModuleBase(object):
 
         # apis
         self._task_lists_api = None
+        self._task_list_group_api = None
         
         # There does not seem to be a way to implement a nested required_if and required_one_of
         if self.state == "fsg":
@@ -265,13 +267,21 @@ class FSentryModuleBase(object):
     @property
     def task_lists_api(self):
         '''
-        Task list api property
+        Task lists api property
         '''
         if not self._task_lists_api:
             self._task_lists_api = TaskListsApi(config=self._config)
         return self._task_lists_api
 
-
+    @property
+    def task_list_groups_api(self):
+        '''
+        Task list groups api property
+        '''
+        if not self._task_list_group_api:
+            self._task_list_group_api = TaskListGroupsApi(config=self._config)
+        return self._task_list_group_api
+    
     def log(self, msg, pretty_print=False):
         # pass
         # Use only during module development
