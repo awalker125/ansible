@@ -5,27 +5,17 @@
 
 import json
 import os
-import re
-import sys
-import copy
-import inspect
-import traceback
 import logging
-
-
-from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
-from ansible.constants import config
-from ansible.utils.display import logger
-try:
-    from ansible.release import __version__ as ANSIBLE_VERSION
-except ImportError:
-    ANSIBLE_VERSION = 'unknown'
+
+FSENTRY_SDK_MIN_RELEASE = '0.12.128'
+REQUESTS_MIN_RECOMMENDED_RELEASE = '2.18.4'
+
 
 FSENTRY_COMMON_ARGS = dict(
     fsentry_host=dict(
@@ -98,7 +88,6 @@ FSENTRY_COMMON_ARGS = dict(
     debug=dict(type='bool', default=False)
 )
 
-
 FSENTRY_COMMON_REQUIRED_IF = [
   [ "state", "present", [ "name" ] ],
   [ "state", "absent", [ "name" ] ],
@@ -127,9 +116,6 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
-
-FSENTRY_SDK_MIN_RELEASE = '0.12.128'
-REQUESTS_MIN_RECOMMENDED_RELEASE = '2.18.4'
 
 class FSentryModuleBase(object):
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
@@ -177,7 +163,7 @@ class FSentryModuleBase(object):
             self.fail("Do you have requests>={0} installed? Try `pip install requests`".format(REQUESTS_MIN_RECOMMENDED_RELEASE))
 
         
-        #common params
+        # common params
         self.state = None
         self.name = None
         self.force = None
@@ -185,22 +171,22 @@ class FSentryModuleBase(object):
         self.dest = None
         self.agent = None
         
-        #set our args as params
+        # set our args as params
         for key in merged_arg_spec:
             setattr(self, key, self.module.params[key])
         
         self.check_mode = self.module.check_mode
         
-        
+        #init config used to connect to forum
         self._config = self._get_config(self.module.params)
 
         # apis
         self._task_lists_api = None
         
-        
+        # There does not seem to be a way to implement a nested required_if and required_one_of
         if self.state == "fsg":
             if self.src is None and self.dest is None:
-                #Doesnt seem to be a way to implement a nested required_if and required_one_of
+                
                 self.fail("one of src or dest is required with state fsg")
 
         if not skip_exec:
@@ -236,33 +222,36 @@ class FSentryModuleBase(object):
     
     def dest_as_file(self):
         '''
-        Converts dest to a file incase we got a directory
+        Converts dest to a file in case we get passed a directory
         '''
-        self.log("dest_as_file")
+        #self.log("dest_as_file")
+        
         if os.path.exists(self.dest):
             if os.path.isdir(self.dest):
-                self.log("{0} exists and is directory".format(self.dest))
+                #self.log("{0} exists and is directory".format(self.dest))
                 if not self.dest.endswith("/"):
-                    self.dest = "{0}/{1}.fsg".format(self.dest,self.name)
+                    self.dest = "{0}/{1}.fsg".format(self.dest, self.name)
                 else:
-                    self.dest = "{0}{1}.fsg".format(self.dest,self.name)
-                self.log("new dest {0}".format(self.dest))
+                    self.dest = "{0}{1}.fsg".format(self.dest, self.name)
+                #self.log("new dest {0}".format(self.dest))
         else:
-            self.log(type(os.path.basename(self.dest)))
+            #self.log(type(os.path.basename(self.dest)))
             if not os.path.basename(self.dest):
                 # os.path.basename returns "" if the path ends in /
-                self.log("{0} doesnt exists but looks like we want a directory".format(self.dest))
-                self.dest = "{0}{1}.fsg".format(self.dest,self.name)
+                #self.log("{0} doesnt exists but looks like we want a directory".format(self.dest))
+                self.dest = "{0}{1}.fsg".format(self.dest, self.name)
             else:
-                #should we check for an append .fsg
-                self.log("{0} doesnt exists but looks like we have specified a file".format(self.dest))
-            
+                # should we check for an append .fsg
+                #self.log("{0} doesnt exists but looks like we have specified a file".format(self.dest))
+                pass
 
 
 
 
     def _get_config(self, params):
-
+        '''
+        Helper to create a config object from module args
+        '''
         _fsentry_protocol = params.get('fsentry_protocol')
         _fsentry_host = params.get('fsentry_host')
         _fsentry_port = params.get('fsentry_port')
@@ -275,7 +264,9 @@ class FSentryModuleBase(object):
         
     @property
     def task_lists_api(self):
-        
+        '''
+        Task list api property
+        '''
         if not self._task_lists_api:
             self._task_lists_api = TaskListsApi(config=self._config)
         return self._task_lists_api
@@ -289,9 +280,4 @@ class FSentryModuleBase(object):
             l.debug(json.dumps(msg, indent=4, sort_keys=True))
         else:
             l.debug(msg)
-        # if self.debug:
-        #    log_file = open('fsentry.log', 'a')
-        #    if pretty_print:
-        #        log_file.write(json.dumps(msg, indent=4, sort_keys=True))
-        #    else:
-        #        log_file.write(msg + u'\n')
+
