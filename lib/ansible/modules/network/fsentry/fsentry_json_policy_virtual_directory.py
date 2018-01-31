@@ -18,28 +18,32 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: fsentry_json_policies
+module: fsentry_json_policy_virtual_directory
 version_added: "2.4"
-short_description: Manage forum sentry JsonPolicies object(s).
+short_description: Manage forum sentry JsonPolicy virtual directory(s).
 description:
-    - Create, update or delete a JsonPolicies.
-    - Import/export a JsonPolicies.
+    - Create, update or delete a JsonPolicy virtual directory(s)
 options:
+    description:
+        description:
+            - Description to be added to the JsonPolicy virtual directory object on the forum.
+    parent:
+        description:
+            - The parent JsonPolicy on the forum. This must already exist.
+        required: True
     remote_path:
         description:
-            - The remote path to use
+            - The remote path to use   
     listener_policy:
         description:
-            - The listner policy to use
+            - The listener policy to use
     virtual_path:
         description:
             - The virtual path to use
     remote_policy:
         description:
             - The remote policy to use
-    description:
-        description:
-            - Description to be added to the JsonPolicies object on the forum.
+            - required if I(use_remote_policy=true)
     request_process_type:
         description:
             - the type of request processing to use
@@ -52,15 +56,45 @@ options:
         choices:
           - "TASK_LIST"
           - "TASK_LIST_GROUP"            
-    idp_group:
-        description:
-            - the idp group to use
     request_process:
         description:
             - the task list or task list group to use for request processing        
     response_process:
         description:
-            - the task list or task list group to use for response processing               
+            - the task list or task list group to use for response processing
+    state:
+      description:
+        - Assert the state of the forum sentry object.
+        - If I(state=absent) the object will be deleted from forum if it exists.
+        - If I(state=present) the object will be created/updated on the forum to match the module arguments. Optional arguments which are not provided will not be updated.
+        - I(state=fsg) is not supported at the virtual directory level. Export/import its parent object instead.
+      default: present
+      choices:
+        - present
+        - absent         
+    error_template:
+        description:
+            - the error template to use            
+    use_remote_policy:
+        description:
+            - use a remote policy
+        type: bool     
+    request_filter_policy:
+        description:
+            - the request filter policy to use
+    enabled:
+        description:
+            - Should the virtual directory be enabled on the forum?
+        type: bool
+        default: yes                       
+    virtual_host:
+        description:
+            - the virtual host to use
+    acl_policy:
+        description:
+            - the acl policy to use
+            
+                                       
 extends_documentation_fragment:
     - fsentry
 
@@ -68,42 +102,16 @@ author:
     - "Andrew Walker (@awalker125)"
     - "Andrew Partis (@partis)"
     - "Carl Stuart (@automation1002)"
+
+notes:
+    - The model for the JsonPolicies api on forum is called JsonPolicies not JsonPolicy
 '''
 
 EXAMPLES = '''
-#import
-
-fsentry_json_policies:
-  name: hello_world
-  fsentry_protocol: http
-  fsentry_host: forumsentry-dev
-  fsentry_port: '8081'
-  fsentry_username: admin
-  fsentry_password: "********"
-  fsentry_verify_ssl: false
-  state: fsg
-  fsg_password: "********"
-  src: "/tmp/hello_world.fsg"
-  force: 'true'
-  
-#export
-
-fsentry_json_policies:
-  name: hello_world
-  fsentry_protocol: http
-  fsentry_host: forumsentry-dev
-  fsentry_port: '8081'
-  fsentry_username: admin
-  fsentry_password: "********"
-  fsentry_verify_ssl: false
-  state: fsg
-  fsg_password: "********"
-  dest: "/tmp/"
-  force: 'true'
-
 #create
 
-fsentry_json_policies:
+fsentry_json_policies_virtual_directory:
+  parent: hello_world
   name: hello_world
   fsentry_protocol: http
   fsentry_host: forumsentry-dev
@@ -114,13 +122,16 @@ fsentry_json_policies:
   state: present
   description: "hello_world world"
   listener_policy: hello
+  virtual_path: "/login"
 
   
 
 #remove
 
-fsentry_json_policies:
-  name: hello_world
+fsentry_json_policies_virtual_directory:
+
+  parent: hello_world
+  name: "New Virtual Directory"
   fsentry_protocol: http
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
@@ -138,11 +149,9 @@ state:
   contains:
       status:
           description: the status of the operation
-          returned: when state is fsg or absent
+          returned: when state is absent
           type: str
           sample:
-              - deployed
-              - exported
               - deleted
       name:
           description: ""
@@ -182,7 +191,7 @@ state:
           samples:
             - "TASK_LIST"
             - "TASK_LIST_GROUP"
-      idp_group:
+      error_template:
           description: ""
           returned: when state is present
           type: str
@@ -194,43 +203,72 @@ state:
           description: ""
           returned: when state is present
           type: str
-          
+      request_filter_policy:
+          description: ""
+          returned: when state is present
+          type: str
+      virtual_host:
+          description: ""
+          returned: when state is present
+          type: str   
+      acl_policy:
+          description: ""
+          returned: when state is present
+          type: str
+      enabled:
+          description: ""
+          returned: when state is present
+          type: bool
+      use_remote_policy:
+          description: ""
+          returned: when state is present
+          type: bool           
 '''  # NOQA
 
 from ansible.module_utils.network.fsentry.common import FSentryModuleBase
 
 try:
-    from forumsentry_api.models.json_policies import JsonPolicies
+    #from forumsentry_api.models.json_policies import JsonPolicies
+    from forumsentry_api.models.virtual_directory import VirtualDirectory
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
-class FSentryJsonPolicies(FSentryModuleBase):
+class FSentryJsonPolicyVirtualDirectory(FSentryModuleBase):
 
 
     def __init__(self):
 
         # Additional args for this module
         self.module_arg_spec = dict(
-
+            parent=dict(type='str',required=True),
+            acl_policy=dict(type='str'),
             remote_path=dict(type='str'),
-            listener_policy=dict(type='str'),
-            virtual_path=dict(type='str'),
-            remote_policy=dict(type='str'),
+            virtual_host=dict(type='str'),
+            enabled=dict(type='bool', default=True),
             description=dict(type='str'),
             request_process_type=dict(type='str', choices=['TASK_LIST', 'TASK_LIST_GROUP']),
             response_process_type=dict(type='str', choices=['TASK_LIST', 'TASK_LIST_GROUP']),
-            idp_group=dict(type='str'),
+            listener_policy=dict(type='str'),
             request_process=dict(type='str'),
-            response_process=dict(type='str')
-            
+            response_process=dict(type='str'),
+            request_filter_policy=dict(type='str'),
+            remote_policy=dict(type='str'),
+            use_remote_policy=dict(type='bool'),
+            error_template=dict(type='str'),
+            virtual_path=dict(type='str'),
+            state=dict(
+                type='str',
+                default='present',
+                choices=['present', 'absent']
+                )                     
             )
 
 
         self.module_required_if = [
-            [ 'state' , 'present' , [ 'name' ] ],
-            [ 'state' , 'absent' , [ 'name' ] ],
-#            [ 'enable_ssl' , 'true' , [ 'ssl_initiation_policy' ] ],
+            [ 'state' , 'present' , [ 'name' , 'parent' ] ],
+            [ 'state' , 'absent' , [ 'name', 'parent' ] ],
+            [ 'use_remote_policy' , 'true' , [ 'remote_policy' ] ],
         ]
 
 
@@ -241,20 +279,26 @@ class FSentryJsonPolicies(FSentryModuleBase):
 
         # additional props for this module
         # These will have there values set as part of super().__init__
+        self.parent = None
+        self.acl_policy = None
         self.remote_path = None
-        self.listener_policy = None
-        self.virtual_path = None
-        self.remote_policy = None
+        self.virtual_host = None
+        self.enabled = None
         self.description = None        
         self.request_process_type = None
         self.response_process_type = None
-        self.idp_group = None
+        self.listener_policy = None
         self.request_process = None
         self.response_process = None
-
-          
-                
-        super(FSentryJsonPolicies, self).__init__(self.module_arg_spec,
+        self.request_filter_policy = None
+        self.remote_policy = None        
+        self.use_remote_policy = None          
+        self.error_template = None
+        self.virtual_path = None       
+        
+        
+                        
+        super(FSentryJsonPolicyVirtualDirectory, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
                                             required_if=self.module_required_if,
                                             add_file_common_args=False
@@ -264,19 +308,22 @@ class FSentryJsonPolicies(FSentryModuleBase):
 
     def exec_module(self, **kwargs):
 
-        want_state = JsonPolicies(name=self.name,
-
+        want_state = VirtualDirectory(  name=self.name,
+                                        acl_policy=self.acl_policy,
                                         remote_path=self.remote_path,
-                                        listener_policy=self.listener_policy,
-                                        virtual_path=self.virtual_path,
-                                        remote_policy=self.remote_policy,
+                                        virtual_host=self.virtual_host,
+                                        enabled=self.enabled,
                                         description=self.description,
                                         request_process_type=self.request_process_type,
                                         response_process_type=self.response_process_type,
-                                        idp_group=self.idp_group,
+                                        listener_policy=self.listener_policy,
                                         request_process=self.request_process,
                                         response_process=self.response_process,
-                                        
+                                        request_filter_policy=self.request_filter_policy,
+                                        remote_policy=self.remote_policy,
+                                        use_remote_policy=self.use_remote_policy,
+                                        error_template=self.error_template,
+                                        virtual_path=self.virtual_path,                                                                                                                             
                                         )
                                         
                                         
@@ -292,7 +339,7 @@ class FSentryJsonPolicies(FSentryModuleBase):
         
         # Get the current state
         try:
-            have_state = api.get(self.name)
+            have_state = api.get_virtual_directory(self.parent,self.name)
         except Exception as e:
             self.fail("Failed to get current state: {0}".format(e.message))
         
@@ -354,67 +401,7 @@ class FSentryJsonPolicies(FSentryModuleBase):
                 # It doesnt exist so we do not need to do anything
                 
                 changed = False
-       
-        
-
-
-      
-        # We want to do an import or export
-        elif self.state == 'fsg':
-            
-            if self.src:
-                # src arg provided we want to deploy to forum. (Note: we are relying on the module validation rules to ensure either src or dest is set with state=fsg)
-                # 
-                # 1. Check the src file is a file
-                # 2. Check the src file is readable
-                # 3. If have_state is not None the JsonPolicies exists on the forum so:
-                #    i. if force then upload
-                #    ii. if not force then assume no changes are required
-                #     
-                
-                # this will fail if its not a file and readable
-                self.src_is_valid()
-                # we want to import to the device
-                if have_state is not None:
-                    # the JsonPolicies already exists. We will only import if force = true
-                    if self.force:
-                        changed = True
-                    else:
-                        self.module.warn("{0} exists. Use force to overwrite".format(self.name))
-                        changed = False
-                else:
-                    # the JsonPolicies doesnt exist so we should run the import. There is no way to validate that the import contains the JsonPolicies we are interested in unfortunately
-                    changed = True    
-            else:
-                # dest arg provided we want to export from the forum. (Note: we are relying on the module validation rules to ensure either src or dest is set with state=fsg)
-                #
-                # 1. If has_state is None then fail as nothing to export
-                # 2. Check to see dest is a directory. If it is then make it a file called \"{0}/{1}.fsg\".format(self.dest,self.name)
-                # 3. Check the directory we want to put the file in exists. If not try to create it. Fail if we cant
-                # 4. See if the file exist already. If it does:
-                #    ii. if force then download
-                #    iii. if not force then assume no changes are required
-                # 4. If the file doesnt exist changed = true
-
-                
-                if have_state is None:
-                    self.fail("cannot export none existent JsonPolicies {0}".format(self.name))
-                
-                # make sure our dest is a file not a directory.
-                self.dest_as_file()
-                
-                # We already have a file here
-                if os.path.isfile(self.dest):
-                    if self.force:
-                        changed = True
-                    else:
-                        changed = False
-                        self.module.warn("{0} exists. Use force to overwrite".format(self.dest))
-                else:
-                    # We dont have the existing file
-                    changed = True
-
-     
+         
         else:
             self.fail("unsupported state: {0}".format(self.state))    
             
@@ -430,7 +417,7 @@ class FSentryJsonPolicies(FSentryModuleBase):
             if self.state == 'present' and changed:
                 # Create/Update the JsonPolicies
                 try:
-                    updated_state = api.set(self.name, want_state)
+                    updated_state = api.set_virtual_directory(self.parent,self.name, want_state)
                     self.results['state'] = updated_state.to_dict()
                     
                 except Exception as e:
@@ -439,66 +426,18 @@ class FSentryJsonPolicies(FSentryModuleBase):
             elif self.state == 'absent' and changed:
                 # delete the JsonPolicies
                 try:
-                    updated_state = api.delete(self.name)
+                    updated_state = api.delete_virtual_directory(self.parent, self.name)
                     self.results['state']['status'] = 'deleted'
                 
                 except Exception as e:
                     self.fail("Failed to update state: {0} ".format(e.message))
-            
-            elif self.state == 'fsg' and changed:
-                # deploy/export mode
-                
-                if self.src:
-                    # deploy fsg
-                    
-                    try:
-                        api.deploy(self.src, self.fsg_password)
-                        self.results['state']['status'] = 'deployed'
-                        
-                    except Exception as e:
-                        self.fail("Failed to deploy fsg {0}: {1} ".format(self.src, e.message))
-                else:
-                    # export mode
-                    
-                    fsg_tmp = None
-                    try:
-                        dest_dir = os.path.dirname(self.dest)
-                        
-                        # check/create dest dir
-                        if not os.path.isdir(dest_dir):
-                            os.makedirs(dest_dir)
-                        
-                        # get a temp file name to download to
-                        fsg_tmp = tempfile.mktemp(dir=dest_dir)
-                        
-                        # download to a temp file
-                        api.export(self.name, fsg_tmp, self.fsg_password, self.agent)
-                        
-                        # move the temp file to the dest
-                        self.module.atomic_move(fsg_tmp, self.dest)
-                        
-                    except (OSError, IOError) as e:
-                        self.fail('The destination directory ({0}) is not writable by the current user. Error was: {1}'.format(os.path.dirname(self.dest), e.message))
-                    except Exception as e:
-                        self.fail("Failed to export JsonPolicies: {0}".format(e.message))
-                    finally:
-                        # cleanup any temp files
-                        if fsg_tmp is not None:
-                            if os.path.isfile(fsg_tmp):
-                                try:
-                                    os.remove(fsg_tmp)
-                                except Exception as e:
-                                    # We couldnt cleanup for some reason but we will not fail
-                                    pass
-                        
-
-                    self.results['state']['status'] = 'exported'
                           
+        
         return self.results
 
 
 def main():
-    FSentryJsonPolicies()
+    FSentryJsonPolicyVirtualDirectory()
 
 if __name__ == '__main__':
     main()
