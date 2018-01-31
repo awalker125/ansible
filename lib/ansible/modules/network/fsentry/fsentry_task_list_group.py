@@ -49,11 +49,10 @@ fsentry_task_list_group:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: fsg
-  fsg_password: ********
+  fsg_password: "********"
   src: "/tmp/hello_world.fsg"
   force: 'true'
   
@@ -65,11 +64,10 @@ fsentry_task_list_group:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: fsg
-  fsg_password: ********
+  fsg_password: "********"
   dest: "/tmp/"
   force: 'true'
 
@@ -81,9 +79,8 @@ fsentry_task_list_group:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: present
   description: "hello_world world"
   task_lists: "task_list1,task_list2"
@@ -96,9 +93,8 @@ fsentry_task_list_group:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: absent
 '''
 

@@ -105,6 +105,8 @@ try:
     from forumsentry.task_lists_api import TaskListsApi
     from forumsentry.task_list_groups_api import TaskListGroupsApi
     from forumsentry.http_listener_policy_api import HttpListenerPolicyApi
+    from forumsentry.http_remote_policy_api import HttpRemotePolicyApi
+    from forumsentry.json_policies_api import JsonPoliciesApi
     from forumsentry.config import Config
 
     HAS_FSENTRY_SDK = True
@@ -186,6 +188,8 @@ class FSentryModuleBase(object):
         self._task_lists_api = None
         self._task_list_group_api = None
         self._http_listener_policy_api = None
+        self._http_remote_policy_api = None
+        self._json_policies_api = None
         
         # There does not seem to be a way to implement a nested required_if and required_one_of
         if self.state == "fsg":
@@ -293,6 +297,24 @@ class FSentryModuleBase(object):
             self._http_listener_policy_api = HttpListenerPolicyApi(config=self._config)
         return self._http_listener_policy_api  
 
+
+    @property
+    def http_remote_policy_api(self):
+        '''
+        Http remote policy api property
+        '''
+        if not self._http_remote_policy_api:
+            self._http_remote_policy_api = HttpRemotePolicyApi(config=self._config)
+        return self._http_remote_policy_api  
+
+    @property
+    def json_policies_api(self):
+        '''
+        json policies api property
+        '''
+        if not self._json_policies_api:
+            self._json_policies_api = JsonPoliciesApi(config=self._config)
+        return self._json_policies_api      
     
     def log(self, msg, pretty_print=False):
         # pass

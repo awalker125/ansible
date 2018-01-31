@@ -128,11 +128,10 @@ fsentry_http_listener_policy:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: fsg
-  fsg_password: ********
+  fsg_password: "********"
   src: "/tmp/hello_world.fsg"
   force: 'true'
   
@@ -144,11 +143,10 @@ fsentry_http_listener_policy:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: fsg
-  fsg_password: ********
+  fsg_password: "********"
   dest: "/tmp/"
   force: 'true'
 
@@ -160,9 +158,8 @@ fsentry_http_listener_policy:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: present
   description: "hello_world world"
   port: 8088
@@ -176,9 +173,8 @@ fsentry_http_listener_policy:
   fsentry_host: forumsentry-dev
   fsentry_port: '8081'
   fsentry_username: admin
-  fsentry_password: ********
+  fsentry_password: "********"
   fsentry_verify_ssl: false
-  debug: false
   state: absent
 '''
 
