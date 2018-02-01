@@ -11,9 +11,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
+from forumsentry.documents_api import DocumentsApi
 
 
-FSENTRY_SDK_MIN_RELEASE = '0.12.128'
+FSENTRY_SDK_MIN_RELEASE = '0.14.139'
 REQUESTS_MIN_RECOMMENDED_RELEASE = '2.18.4'
 
 
@@ -107,6 +108,7 @@ try:
     from forumsentry.http_listener_policy_api import HttpListenerPolicyApi
     from forumsentry.http_remote_policy_api import HttpRemotePolicyApi
     from forumsentry.json_policies_api import JsonPoliciesApi
+    from forumsentry.documents_api import DocumentsApi
     from forumsentry.config import Config
 
     HAS_FSENTRY_SDK = True
@@ -190,6 +192,7 @@ class FSentryModuleBase(object):
         self._http_listener_policy_api = None
         self._http_remote_policy_api = None
         self._json_policies_api = None
+        self._documents_api = None       
         
         # There does not seem to be a way to implement a nested required_if and required_one_of
         if self.state == "fsg":
@@ -315,6 +318,16 @@ class FSentryModuleBase(object):
         if not self._json_policies_api:
             self._json_policies_api = JsonPoliciesApi(config=self._config)
         return self._json_policies_api      
+  
+    @property
+    def documents_api(self):
+        '''
+        Documents api property
+        '''
+        if not self._documents_api:
+            self._documents_api = DocumentsApi(config=self._config)
+        return self._documents_api
+
     
     def log(self, msg, pretty_print=False):
         # pass
