@@ -61,17 +61,7 @@ options:
             - the task list or task list group to use for request processing        
     response_process:
         description:
-            - the task list or task list group to use for response processing
-    state:
-      description:
-        - Assert the state of the forum sentry object.
-        - If I(state=absent) the object will be deleted from forum if it exists.
-        - If I(state=present) the object will be created/updated on the forum to match the module arguments. Optional arguments which are not provided will not be updated.
-        - I(state=fsg) is not supported at the virtual directory level. Export/import its parent object instead.
-      default: present
-      choices:
-        - present
-        - absent         
+            - the task list or task list group to use for response processing     
     error_template:
         description:
             - the error template to use            
@@ -96,7 +86,8 @@ options:
             
                                        
 extends_documentation_fragment:
-    - fsentry
+    - fsentry_base
+    - fsentry_nofsg
 
 author:
     - "Andrew Walker (@awalker125)"
@@ -257,11 +248,11 @@ class FSentryJsonPolicyVirtualDirectory(FSentryModuleBase):
             use_remote_policy=dict(type='bool'),
             error_template=dict(type='str'),
             virtual_path=dict(type='str'),
-            state=dict(
-                type='str',
-                default='present',
-                choices=['present', 'absent']
-                )                     
+#             state=dict(
+#                 type='str',
+#                 default='present',
+#                 choices=['present', 'absent']
+#                 )                     
             )
 
 
@@ -301,7 +292,8 @@ class FSentryJsonPolicyVirtualDirectory(FSentryModuleBase):
         super(FSentryJsonPolicyVirtualDirectory, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
                                             required_if=self.module_required_if,
-                                            add_file_common_args=False
+                                            add_file_common_args=False,
+                                            fsg=False
                                             )
 
 

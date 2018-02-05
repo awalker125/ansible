@@ -11,10 +11,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
-from forumsentry.documents_api import DocumentsApi
 
 
-FSENTRY_SDK_MIN_RELEASE = '0.14.139'
+
+FSENTRY_SDK_MIN_RELEASE = '0.15.143'
 REQUESTS_MIN_RECOMMENDED_RELEASE = '2.18.4'
 
 
@@ -62,12 +62,11 @@ FSENTRY_COMMON_ARGS = dict(
         type='str',
         required=True      
     ),
-    state=dict(
-        type='str',
-        default='present',
-        choices=['present', 'absent', 'fsg']
-               
-    ),
+
+    debug=dict(type='bool', default=False)
+)
+
+FSENTRY_FSG_ARGS = dict(
     fsg_password=dict(
         type='str',
         aliases=['fsg_pass'],
@@ -86,7 +85,21 @@ FSENTRY_COMMON_ARGS = dict(
     agent=dict(
         type='str'
     ),
-    debug=dict(type='bool', default=False)
+    state=dict(
+        type='str',
+        default='present',
+        choices=['present', 'absent', 'fsg']
+               
+    ),
+)
+
+FSENTRY_NO_FSG_ARGS = dict(
+    state=dict(
+        type='str',
+        default='present',
+        choices=['present', 'absent']
+               
+    )
 )
 
 FSENTRY_COMMON_REQUIRED_IF = [
@@ -103,13 +116,14 @@ HAS_FSENTRY_SDK = True
 HAS_REQUESTS = True
 
 try:
-    from forumsentry.task_lists_api import TaskListsApi
-    from forumsentry.task_list_groups_api import TaskListGroupsApi
-    from forumsentry.http_listener_policy_api import HttpListenerPolicyApi
-    from forumsentry.http_remote_policy_api import HttpRemotePolicyApi
-    from forumsentry.json_policies_api import JsonPoliciesApi
-    from forumsentry.documents_api import DocumentsApi
-    from forumsentry.config import Config
+    from forumsentry import TaskListsApi
+    from forumsentry import TaskListGroupsApi
+    from forumsentry import HttpListenerPolicyApi
+    from forumsentry import HttpRemotePolicyApi
+    from forumsentry import JsonPoliciesApi
+    from forumsentry import DocumentsApi
+    from forumsentry import KeyPairsApi
+    from forumsentry import Config
 
     HAS_FSENTRY_SDK = True
 except ImportError as e:
@@ -127,16 +141,21 @@ class FSentryModuleBase(object):
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None, skip_exec=False):
+                 required_if=None, skip_exec=False, fsg=True):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(FSENTRY_COMMON_ARGS)
 
+        if fsg:
+            merged_arg_spec.update(FSENTRY_FSG_ARGS)
+        else:
+            merged_arg_spec.update(FSENTRY_NO_FSG_ARGS)
 
         if derived_arg_spec:
             merged_arg_spec.update(derived_arg_spec)
 
         merged_required_if = list(FSENTRY_COMMON_REQUIRED_IF)
+        
         if required_if:
             merged_required_if += required_if
         
@@ -192,7 +211,8 @@ class FSentryModuleBase(object):
         self._http_listener_policy_api = None
         self._http_remote_policy_api = None
         self._json_policies_api = None
-        self._documents_api = None       
+        self._documents_api = None
+        self._key_pairs_api = None        
         
         # There does not seem to be a way to implement a nested required_if and required_one_of
         if self.state == "fsg":
@@ -328,7 +348,15 @@ class FSentryModuleBase(object):
             self._documents_api = DocumentsApi(config=self._config)
         return self._documents_api
 
-    
+    @property
+    def key_pairs_api(self):
+        '''
+        KeyPairs api property
+        '''
+        if not self._key_pairs_api:
+            self._key_pairs_api = KeyPairsApi(config=self._config)
+        return self._key_pairs_api
+      
     def log(self, msg, pretty_print=False):
         # pass
         # Use only during module development

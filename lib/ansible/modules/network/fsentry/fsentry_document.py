@@ -31,7 +31,8 @@ options:
         description:
             - The contents of the documents. E.g '<?xml version="1.0" encoding="UTF-8"?><auth_token></auth_token>'
 extends_documentation_fragment:
-    - fsentry
+    - fsentry_base
+    - fsentry_fsg
 
 author:
     - "Andrew Walker (@awalker125)"

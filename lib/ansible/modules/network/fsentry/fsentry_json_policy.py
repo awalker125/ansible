@@ -62,7 +62,8 @@ options:
         description:
             - the task list or task list group to use for response processing               
 extends_documentation_fragment:
-    - fsentry
+    - fsentry_base
+    - fsentry_fsg
 
 author:
     - "Andrew Walker (@awalker125)"

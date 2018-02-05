@@ -835,6 +835,8 @@ class AnsibleModule(object):
         self._socket_path = None
         self._shell = None
         self._verbosity = 0
+        self._selinux_special_fs = 'nfs,vboxsf,fuse,ramfs,9p'
+
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}

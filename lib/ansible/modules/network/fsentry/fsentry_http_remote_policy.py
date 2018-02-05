@@ -74,7 +74,8 @@ options:
             - the remote port to send to    
         type: int                          
 extends_documentation_fragment:
-    - fsentry
+    - fsentry_base
+    - fsentry_fsg
 
 author:
     - "Andrew Walker (@awalker125)"

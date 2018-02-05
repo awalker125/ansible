@@ -32,7 +32,8 @@ options:
             - A comma separated list of TaskLists to include in the task TaskListGroup
         type: str
 extends_documentation_fragment:
-    - fsentry
+    - fsentry_base
+    - fsentry_fsg
 
 author:
     - "Andrew Walker (@awalker125)"

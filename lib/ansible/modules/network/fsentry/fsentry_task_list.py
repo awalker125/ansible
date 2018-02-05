@@ -33,7 +33,8 @@ options:
         default: yes
         type: bool
 extends_documentation_fragment:
-    - fsentry
+    - fsentry_base
+    - fsentry_fsg
 
 author:
     - "Andrew Walker (@awalker125)"
