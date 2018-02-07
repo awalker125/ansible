@@ -14,7 +14,7 @@ import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 
 
-FSENTRY_SDK_MIN_RELEASE = '0.15.143'
+FSENTRY_SDK_MIN_RELEASE = '0.17.156'
 REQUESTS_MIN_RECOMMENDED_RELEASE = '2.18.4'
 
 
@@ -116,6 +116,7 @@ HAS_FSENTRY_SDK = True
 HAS_REQUESTS = True
 
 try:
+    from forumsentry import Config
     from forumsentry import TaskListsApi
     from forumsentry import TaskListGroupsApi
     from forumsentry import HttpListenerPolicyApi
@@ -123,8 +124,9 @@ try:
     from forumsentry import JsonPoliciesApi
     from forumsentry import DocumentsApi
     from forumsentry import KeyPairsApi
-    from forumsentry import Config
-
+    from forumsentry import SslInitiationPolicyApi
+    from forumsentry import SslTerminationPolicyApi
+    
     HAS_FSENTRY_SDK = True
 except ImportError as e:
 
@@ -138,6 +140,7 @@ except ImportError:
 
 
 class FSentryModuleBase(object):
+    
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
@@ -182,7 +185,7 @@ class FSentryModuleBase(object):
         
 
         if not HAS_FSENTRY_SDK:
-            self.fail("Do you have forumsentry>={0} installed? Try `pip install forumsentry`".format(FSENTRY_SDK_MIN_RELEASE))
+            self.fail("Do you have forumsentry>={0} installed? Try `pip install forumsentry --upgrade`".format(FSENTRY_SDK_MIN_RELEASE))
 
         if not HAS_REQUESTS:
             self.fail("Do you have requests>={0} installed? Try `pip install requests`".format(REQUESTS_MIN_RECOMMENDED_RELEASE))
@@ -212,7 +215,10 @@ class FSentryModuleBase(object):
         self._http_remote_policy_api = None
         self._json_policies_api = None
         self._documents_api = None
-        self._key_pairs_api = None        
+        self._key_pairs_api = None
+        self._ssl_termination_policy_api = None
+        self._ssl_initiation_policy_api = None
+                
         
         # There does not seem to be a way to implement a nested required_if and required_one_of
         if self.state == "fsg":
@@ -228,7 +234,6 @@ class FSentryModuleBase(object):
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
 
-
     def fail(self, msg, **kwargs):
         '''
         Shortcut for calling module.fail()
@@ -238,7 +243,6 @@ class FSentryModuleBase(object):
         :return: None
         '''
         self.module.fail_json(msg=msg, **kwargs)
-
 
     def src_is_valid(self):
         if not os.path.isfile(self.src):
@@ -275,10 +279,7 @@ class FSentryModuleBase(object):
                 # should we check for an append .fsg
                 #self.log("{0} doesnt exists but looks like we have specified a file".format(self.dest))
                 pass
-
-
-
-
+    
     def _get_config(self, params):
         '''
         Helper to create a config object from module args
@@ -356,6 +357,24 @@ class FSentryModuleBase(object):
         if not self._key_pairs_api:
             self._key_pairs_api = KeyPairsApi(config=self._config)
         return self._key_pairs_api
+
+    @property
+    def ssl_termination_policy_api(self):
+        '''
+        SSL Termination policy api property
+        '''
+        if not self._ssl_termination_policy_api:
+            self._ssl_termination_policy_api = SslTerminationPolicyApi(config=self._config)
+        return self._ssl_termination_policy_api
+
+    @property
+    def ssl_initiation_policy_api(self):
+        '''
+        SSL Initiation policy api property
+        '''
+        if not self._ssl_initiation_policy_api:
+            self._ssl_initiation_policy_api = SslInitiationPolicyApi(config=self._config)
+        return self._ssl_initiation_policy_api
       
     def log(self, msg, pretty_print=False):
         # pass
