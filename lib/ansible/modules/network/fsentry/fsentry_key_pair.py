@@ -116,11 +116,11 @@ class FSentryKeyPair(FSentryModuleBase):
             p12=dict(type='path'),
             p12_password=dict(type='str', no_log=True),
             private_key_password=dict(type='str', no_log=True),
-            create_signer_group=dict(type='bool',default=True)
+            create_signer_group=dict(type='bool', default=True)
             )
 
         self.module_required_if = [
-            [ 'state' , 'present' , [ 'name','p12','p12_password','private_key_password' ] ],
+            [ 'state' , 'present' , [ 'name', 'p12', 'p12_password', 'private_key_password' ] ],
             [ 'state' , 'absent' , [ 'name' ] ]
         ]
 
@@ -166,7 +166,7 @@ class FSentryKeyPair(FSentryModuleBase):
         # We want the KeyPair on the forum
         if self.state == 'present':
             
-            #This will fail if we cant find/read the p12 file
+            # This will fail if we cant find/read the p12 file
             self.p12_is_valid()
                         
             if have_state is not None:
@@ -196,12 +196,12 @@ class FSentryKeyPair(FSentryModuleBase):
 
         # We've figured out if we need to do a change. If we aren't in check mode we now make it
         if not self.check_mode:
-            #We arent in check mode so we'll make changes here if we need to
+            # We arent in check mode so we'll make changes here if we need to
             
             if self.state == 'present' and changed:
-                #Create/Update the KeyPair
+                # Create/Update the KeyPair
                 try:
-                    api.pkcs12(self.name, self.p12, self.p12_password, self.private_key_password,create_signer_group=self.create_signer_group)
+                    api.pkcs12(self.name, self.p12, self.p12_password, self.private_key_password, create_signer_group=self.create_signer_group)
                     self.results['state']['status'] = 'deployed'
                     
                 except Exception as e:

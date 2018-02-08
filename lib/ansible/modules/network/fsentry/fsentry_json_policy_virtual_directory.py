@@ -219,7 +219,7 @@ state:
 from ansible.module_utils.network.fsentry.common import FSentryModuleBase
 
 try:
-    #from forumsentry_api.models.json_policies import JsonPolicies
+    # from forumsentry_api.models.json_policies import JsonPolicies
     from forumsentry_api.models.virtual_directory import VirtualDirectory
 except ImportError:
     # This is handled in azure_rm_common
@@ -232,7 +232,7 @@ class FSentryJsonPolicyVirtualDirectory(FSentryModuleBase):
 
         # Additional args for this module
         self.module_arg_spec = dict(
-            parent=dict(type='str',required=True),
+            parent=dict(type='str', required=True),
             acl_policy=dict(type='str'),
             remote_path=dict(type='str'),
             virtual_host=dict(type='str'),
@@ -300,26 +300,8 @@ class FSentryJsonPolicyVirtualDirectory(FSentryModuleBase):
 
     def exec_module(self, **kwargs):
 
-        want_state = VirtualDirectory(  name=self.name,
-                                        acl_policy=self.acl_policy,
-                                        remote_path=self.remote_path,
-                                        virtual_host=self.virtual_host,
-                                        enabled=self.enabled,
-                                        description=self.description,
-                                        request_process_type=self.request_process_type,
-                                        response_process_type=self.response_process_type,
-                                        listener_policy=self.listener_policy,
-                                        request_process=self.request_process,
-                                        response_process=self.response_process,
-                                        request_filter_policy=self.request_filter_policy,
-                                        remote_policy=self.remote_policy,
-                                        use_remote_policy=self.use_remote_policy,
-                                        error_template=self.error_template,
-                                        virtual_path=self.virtual_path,                                                                                                                             
-                                        )
-                                        
-                                        
-                                        
+
+        want_state = None           
         have_state = None
         updated_state = None
    
@@ -331,12 +313,38 @@ class FSentryJsonPolicyVirtualDirectory(FSentryModuleBase):
         
         # Get the current state
         try:
-            have_state = api.get_virtual_directory(self.parent,self.name)
+            have_state = api.get_virtual_directory(self.parent, self.name)
         except Exception as e:
             self.fail("Failed to get current state: {0}".format(e.message))
         
         # We want the JsonPolicies on the forum
         if self.state == 'present':
+        
+                
+            try:
+                
+                want_state = VirtualDirectory(name=self.name,
+                                            acl_policy=self.acl_policy,
+                                            remote_path=self.remote_path,
+                                            virtual_host=self.virtual_host,
+                                            enabled=self.enabled,
+                                            description=self.description,
+                                            request_process_type=self.request_process_type,
+                                            response_process_type=self.response_process_type,
+                                            listener_policy=self.listener_policy,
+                                            request_process=self.request_process,
+                                            response_process=self.response_process,
+                                            request_filter_policy=self.request_filter_policy,
+                                            remote_policy=self.remote_policy,
+                                            use_remote_policy=self.use_remote_policy,
+                                            error_template=self.error_template,
+                                            virtual_path=self.virtual_path,
+                                            )
+                                            
+            except Exception as e:
+                self.fail("Failed to create model for want state: {0}".format(e.message))                                 
+                                 
+        
                         
             if have_state is not None:
                 # It exists so we'll check it matches what we want
@@ -409,7 +417,7 @@ class FSentryJsonPolicyVirtualDirectory(FSentryModuleBase):
             if self.state == 'present' and changed:
                 # Create/Update the JsonPolicies
                 try:
-                    updated_state = api.set_virtual_directory(self.parent,self.name, want_state)
+                    updated_state = api.set_virtual_directory(self.parent, self.name, want_state)
                     self.results['state'] = updated_state.to_dict()
                     
                 except Exception as e:

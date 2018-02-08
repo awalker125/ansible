@@ -268,23 +268,8 @@ class FSentryJsonPolicy(FSentryModuleBase):
 
     def exec_module(self, **kwargs):
 
-        want_state = JsonPolicies(name=self.name,
 
-                                        remote_path=self.remote_path,
-                                        listener_policy=self.listener_policy,
-                                        virtual_path=self.virtual_path,
-                                        remote_policy=self.remote_policy,
-                                        description=self.description,
-                                        request_process_type=self.request_process_type,
-                                        response_process_type=self.response_process_type,
-                                        idp_group=self.idp_group,
-                                        request_process=self.request_process,
-                                        response_process=self.response_process,
-                                        
-                                        )
-                                        
-                                        
-                                        
+        want_state = None
         have_state = None
         updated_state = None
    
@@ -302,6 +287,30 @@ class FSentryJsonPolicy(FSentryModuleBase):
         
         # We want the JsonPolicies on the forum
         if self.state == 'present':
+            
+                    
+            try:
+    
+                want_state = JsonPolicies(name=self.name,
+    
+                                            remote_path=self.remote_path,
+                                            listener_policy=self.listener_policy,
+                                            virtual_path=self.virtual_path,
+                                            remote_policy=self.remote_policy,
+                                            description=self.description,
+                                            request_process_type=self.request_process_type,
+                                            response_process_type=self.response_process_type,
+                                            idp_group=self.idp_group,
+                                            request_process=self.request_process,
+                                            response_process=self.response_process,
+                                            
+                                            )
+                                            
+            except Exception as e:
+                self.fail("Failed to create model for want state: {0}".format(e.message))                                 
+                                                                       
+                                        
+            
                         
             if have_state is not None:
                 # It exists so we'll check it matches what we want

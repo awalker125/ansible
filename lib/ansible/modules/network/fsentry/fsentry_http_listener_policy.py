@@ -326,7 +326,7 @@ class FSentryHttpListenerPolicy(FSentryModuleBase):
             acl_policy=dict(type='str'),
             ip_acl_policy=dict(type='str',
                                default="Unrestricted"),
-            password_parameter=dict(type='str',no_log=True),
+            password_parameter=dict(type='str', no_log=True),
             use_device_ip=dict(type='bool'),
             listener_ssl_policy=dict(type='str'),
             username_parameter=dict(type='str'),
@@ -337,7 +337,7 @@ class FSentryHttpListenerPolicy(FSentryModuleBase):
                                 default="Default Template"),
             listener_host=dict(type='str'),
             read_timeout_millis=dict(type='int'),
-            password_authentication_realm=dict(type='str',no_log=True),
+            password_authentication_realm=dict(type='str', no_log=True),
             port=dict(type='int')
             )
 
@@ -390,33 +390,7 @@ class FSentryHttpListenerPolicy(FSentryModuleBase):
 
     def exec_module(self, **kwargs):
 
-        want_state = HttpListenerPolicy(name=self.name,
-                                        description=self.description,
-                                        use_cookie_authentication=self.use_cookie_authentication,
-                                        use_basic_authentication=self.use_basic_authentication,
-                                        acl_policy=self.acl_policy,
-                                        ip_acl_policy=self.ip_acl_policy,
-                                        read_timeout_millis=self.read_timeout_millis,
-                                        password_parameter=self.password_parameter,
-                                        use_digest_authentication=self.use_digest_authentication,
-                                        use_chunking=self.use_chunking,
-                                        port=self.port,
-                                        use_device_ip=self.use_device_ip,
-                                        use_form_post_authentication=self.use_form_post_authentication,
-                                        listener_ssl_policy=self.listener_ssl_enabled,
-                                        username_parameter=self.username_parameter,
-                                        enabled=self.enabled,
-                                        interface=self.interface,
-                                        error_template=self.error_template,
-                                        listener_host=self.listener_host,
-                                        listener_ssl_enabled=self.listener_ssl_enabled,
-                                        password_authentication_realm=self.password_authentication_realm,
-                                        require_password_authentication=self.require_password_authentication,
-                                        use_kerberos_authentication=self.use_kerberos_authentication
-                                        )
-                                        
-                                        
-                                        
+        want_state = None   
         have_state = None
         updated_state = None
    
@@ -434,7 +408,37 @@ class FSentryHttpListenerPolicy(FSentryModuleBase):
         
         # We want the HttpListenerPolicy on the forum
         if self.state == 'present':
-                        
+                 
+            try:
+    
+                want_state = HttpListenerPolicy(name=self.name,
+                                            description=self.description,
+                                            use_cookie_authentication=self.use_cookie_authentication,
+                                            use_basic_authentication=self.use_basic_authentication,
+                                            acl_policy=self.acl_policy,
+                                            ip_acl_policy=self.ip_acl_policy,
+                                            read_timeout_millis=self.read_timeout_millis,
+                                            password_parameter=self.password_parameter,
+                                            use_digest_authentication=self.use_digest_authentication,
+                                            use_chunking=self.use_chunking,
+                                            port=self.port,
+                                            use_device_ip=self.use_device_ip,
+                                            use_form_post_authentication=self.use_form_post_authentication,
+                                            listener_ssl_policy=self.listener_ssl_enabled,
+                                            username_parameter=self.username_parameter,
+                                            enabled=self.enabled,
+                                            interface=self.interface,
+                                            error_template=self.error_template,
+                                            listener_host=self.listener_host,
+                                            listener_ssl_enabled=self.listener_ssl_enabled,
+                                            password_authentication_realm=self.password_authentication_realm,
+                                            require_password_authentication=self.require_password_authentication,
+                                            use_kerberos_authentication=self.use_kerberos_authentication
+                                            )
+            except Exception as e:
+                self.fail("Failed to create model for want state: {0}".format(e.message))                                
+                                        
+
             if have_state is not None:
                 # It exists so we'll check it matches what we want
                 

@@ -298,26 +298,7 @@ class FSentryHttpRemotePolicy(FSentryModuleBase):
 
     def exec_module(self, **kwargs):
 
-        want_state = HttpRemotePolicy(name=self.name,
-
-                                        use_basic_auth=self.use_basic_auth,
-                                        use_chunking=self.use_chunking,
-                                        enable_ssl=self.enable_ssl,
-                                        enabled=self.enabled,
-                                        process_response=self.process_response,
-                                        proxy_policy=self.proxy_policy,
-                                        ssl_initiation_policy=self.ssl_initiation_policy,
-                                        http_authentication_user_policy=self.http_authentication_user_policy,
-                                        remote_authentication=self.remote_authentication,
-                                        remote_server=self.remote_server,
-                                        tcp_connection_timeout=self.tcp_connection_timeout,
-                                        tcp_read_timeout=self.tcp_read_timeout,
-                                        remote_port=self.remote_port
-                                        
-                                        )
-                                        
-                                        
-                                        
+        want_state = None
         have_state = None
         updated_state = None
    
@@ -335,7 +316,30 @@ class FSentryHttpRemotePolicy(FSentryModuleBase):
         
         # We want the HttpRemotePolicy on the forum
         if self.state == 'present':
-                        
+                    
+            try:
+    
+                want_state = HttpRemotePolicy(name=self.name,
+    
+                                            use_basic_auth=self.use_basic_auth,
+                                            use_chunking=self.use_chunking,
+                                            enable_ssl=self.enable_ssl,
+                                            enabled=self.enabled,
+                                            process_response=self.process_response,
+                                            proxy_policy=self.proxy_policy,
+                                            ssl_initiation_policy=self.ssl_initiation_policy,
+                                            http_authentication_user_policy=self.http_authentication_user_policy,
+                                            remote_authentication=self.remote_authentication,
+                                            remote_server=self.remote_server,
+                                            tcp_connection_timeout=self.tcp_connection_timeout,
+                                            tcp_read_timeout=self.tcp_read_timeout,
+                                            remote_port=self.remote_port
+                                            
+                                            )
+                                            
+            except Exception as e:
+                self.fail("Failed to create model for want state: {0}".format(e.message))                                
+                                                  
             if have_state is not None:
                 # It exists so we'll check it matches what we want
                 

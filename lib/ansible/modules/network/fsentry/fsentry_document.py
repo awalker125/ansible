@@ -173,7 +173,7 @@ class FSentryDocument(FSentryModuleBase):
 
     def exec_module(self, **kwargs):
 
-        want_state = Document(name=self.name, description=self.description, document=self.document) 
+        want_state = None
         have_state = None
         updated_state = None
    
@@ -191,7 +191,13 @@ class FSentryDocument(FSentryModuleBase):
         
         # We want the Document on the forum
         if self.state == 'present':
-                        
+            
+            try:
+                want_state = Document(name=self.name, description=self.description, document=self.document) 
+            
+            except Exception as e:
+                self.fail("Failed to create model for want state: {0}".format(e.message))                                
+                                        
             if have_state is not None:
                 # It exists so we'll check it matches what we want
                 
@@ -218,16 +224,16 @@ class FSentryDocument(FSentryModuleBase):
                         if want_value is not None:
                             # want state is Not None so if it doesnt match have we'll need add it to our deltas
                             if  have_value != want_value:
-                                #have value doesnt match want value
+                                # have value doesnt match want value
                                 delta = dict(acutal=have_value, want_value=want_value)
                                 found_deltas.update(prop=delta)
 
                     if len(found_deltas) > 0:
-                        #We have changes we care about.    
+                        # We have changes we care about.    
                         changed = True
                         results = want_state.to_dict()
                     else:
-                        #We do not have any changes we care about.
+                        # We do not have any changes we care about.
                         changed = False
                         results = have_state.to_dict()
             else:
@@ -252,7 +258,7 @@ class FSentryDocument(FSentryModuleBase):
 
 
       
-        #We want to do an import or export
+        # We want to do an import or export
         elif self.state == 'fsg':
             
             if self.src:
@@ -318,10 +324,10 @@ class FSentryDocument(FSentryModuleBase):
 
         # We've figured out if we need to do a change. If we aren't in check mode we now make it
         if not self.check_mode:
-            #We arent in check mode so we'll make changes here if we need to
+            # We arent in check mode so we'll make changes here if we need to
             
             if self.state == 'present' and changed:
-                #Create/Update the Document
+                # Create/Update the Document
                 try:
                     updated_state = api.set(self.name, want_state)
                     self.results['state'] = updated_state.to_dict()
@@ -339,10 +345,10 @@ class FSentryDocument(FSentryModuleBase):
                     self.fail("Failed to update state: {0} ".format(e.message))
             
             elif self.state == 'fsg' and changed:
-                #deploy/export mode
+                # deploy/export mode
                 
                 if self.src:
-                    #deploy fsg
+                    # deploy fsg
                     
                     try:
                         api.deploy(self.src, self.fsg_password)
@@ -351,23 +357,23 @@ class FSentryDocument(FSentryModuleBase):
                     except Exception as e:
                         self.fail("Failed to deploy fsg {0}: {1} ".format(self.src, e.message))
                 else:
-                    #export mode
+                    # export mode
                     
                     fsg_tmp = None
                     try:
                         dest_dir = os.path.dirname(self.dest)
                         
-                        #check/create dest dir
+                        # check/create dest dir
                         if not os.path.isdir(dest_dir):
                             os.makedirs(dest_dir)
                         
-                        #get a temp file name to download to
+                        # get a temp file name to download to
                         fsg_tmp = tempfile.mktemp(dir=dest_dir)
                         
-                        #download to a temp file
+                        # download to a temp file
                         api.export(self.name, fsg_tmp, self.fsg_password, self.agent)
                         
-                        #move the temp file to the dest
+                        # move the temp file to the dest
                         self.module.atomic_move(fsg_tmp, self.dest)
                         
                     except (OSError, IOError) as e:

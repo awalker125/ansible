@@ -42,8 +42,7 @@ options:
     key_pair:
         description:
             - The key pair to use
-        type: str
-        default: yes        
+        type: str      
     enabled_protocols:
         description:
             - Version of TLS/SSL to enable e.g 'TLSv1.2', 'TLSv1.1', 'TLSv1', 'SSLv3', 'SSLv2Hello'
@@ -219,19 +218,8 @@ class FSentrySslInitiationPolicy(FSentryModuleBase):
 
 
     def exec_module(self, **kwargs):
-
-        want_state = SslInitiationPolicy(name=self.name,
-
-                                        ignore_hostname_verification=self.ignore_hostname_verification,
-                                        description=self.description,
-                                        signer_group=self.signer_group,
-                                        key_pair=self.key_pair,
-                                        enabled_protocols=self.enabled_protocols
-                                        
-                                        )
-                                        
-                                        
-                                        
+        
+        want_state = None                   
         have_state = None
         updated_state = None
    
@@ -249,6 +237,24 @@ class FSentrySslInitiationPolicy(FSentryModuleBase):
         
         # We want the SslInitiationPolicy on the forum
         if self.state == 'present':
+            
+                    
+            try:
+    
+                want_state = SslInitiationPolicy(name=self.name,
+    
+                                            ignore_hostname_verification=self.ignore_hostname_verification,
+                                            description=self.description,
+                                            signer_group=self.signer_group,
+                                            key_pair=self.key_pair,
+                                            enabled_protocols=self.enabled_protocols
+                                            
+                                            )
+            except Exception as e:
+                self.fail("Failed to create model for want state: {0}".format(e.message))                                 
+                                                        
+                                        
+                     
                         
             if have_state is not None:
                 # It exists so we'll check it matches what we want
