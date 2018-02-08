@@ -424,7 +424,7 @@ class FSentryHttpListenerPolicy(FSentryModuleBase):
                                             port=self.port,
                                             use_device_ip=self.use_device_ip,
                                             use_form_post_authentication=self.use_form_post_authentication,
-                                            listener_ssl_policy=self.listener_ssl_enabled,
+                                            listener_ssl_policy=self.listener_ssl_policy,
                                             username_parameter=self.username_parameter,
                                             enabled=self.enabled,
                                             interface=self.interface,
