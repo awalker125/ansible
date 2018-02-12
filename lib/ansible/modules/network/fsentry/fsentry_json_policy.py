@@ -315,6 +315,10 @@ class FSentryJsonPolicy(FSentryModuleBase):
             if have_state is not None:
                 # It exists so we'll check it matches what we want
                 
+                #There appears to be an oddity in forum where if you are creating a policy you have to set  listener_policy but if you are updating an existing policy it doesnt like it
+                have_state.listener_policy = None
+                want_state.listener_policy = None
+                
                 if have_state == want_state:
                     # It exists and matches our desired state
                     
